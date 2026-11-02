@@ -16,16 +16,14 @@ jobs:
 
       - name: Verify version matches tag
         run: |
-          META_VER=$(sed -n 's/.*version = "\(.*\)".*/\1/p' netbird.koplugin/_meta.lua)
+          META_VER=$(sed -n 's/.*version = "\(.*\)".*/\1/p' _meta.lua)
           if [ "v${META_VER}" != "${GITHUB_REF_NAME}" ]; then
             echo "Tag ${GITHUB_REF_NAME} does not match _meta.lua version ${META_VER}"
             exit 1
           fi
 
       - name: Build zip
-        run: |
-          cp LICENSE netbird.koplugin/
-          zip -r "netbird.koplugin-${GITHUB_REF_NAME}.zip" netbird.koplugin
+        run: git archive --prefix=netbird.koplugin/ -o "netbird.koplugin-${GITHUB_REF_NAME}.zip" HEAD
 
       - name: Create GitHub release
         env:

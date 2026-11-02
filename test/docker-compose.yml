@@ -48,7 +48,7 @@ services:
     profiles: [test]
     init: true # reaps the daemon we kill, as a device's init does
     privileged: true
-    volumes: ["shared:/shared", "../netbird.koplugin:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
+    volumes: ["shared:/shared", "..:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
     command: ["sh", "/test/reader.sh", "tun"]
 
   # 32-bit, no /dev/net/tun and no NET_ADMIN, like a stock jailbroken Kindle.
@@ -57,7 +57,7 @@ services:
     platform: linux/arm/v7
     profiles: [test]
     init: true # reaps the daemon we kill, as a device's init does
-    volumes: ["shared:/shared", "../netbird.koplugin:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
+    volumes: ["shared:/shared", "..:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
     command: ["sh", "/test/reader.sh", "netstack"]
 
 networks:
