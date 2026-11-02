@@ -1,0 +1,19 @@
+# Test only: local, throwaway server. The secrets below protect nothing.
+server:
+  listenAddress: ":80"
+  exposedAddress: "http://netbird-server:80"
+  stunPorts: [3478]
+  healthcheckAddress: ":9000"
+  logLevel: "info"
+  logFile: "console"
+  authSecret: "dGVzdC1yZWxheS1zZWNyZXQtdGVzdC1yZWxheS1zZWNyZXQ"
+  dataDir: "/var/lib/netbird"
+  auth:
+    issuer: "http://netbird-server/oauth2"
+    signKeyRefreshEnabled: true
+    sessionCookieEncryptionKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+    dashboardRedirectURIs: ["http://netbird-server/nb-auth"]
+    cliRedirectURIs: ["http://localhost:53000/"]
+  store:
+    engine: "sqlite"
+    encryptionKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="

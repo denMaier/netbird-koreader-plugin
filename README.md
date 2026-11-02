@@ -1,5 +1,171 @@
 <img src="assets/icon.svg" width="64" height="64" alt="">
 
-# netbird-koreader-plugin
+# NetBird for KOReader
 
-Created in [T3 Code](https://t3.codes).
+Joins your e-reader to your [NetBird](https://netbird.io) network from inside
+KOReader, so OPDS, progress sync and other KOReader features can reach your
+self-hosted services from anywhere. It works with NetBird Cloud and self-hosted
+servers. That's all it does.
+
+It is an adaptation of
+[koreader-tailscale](https://github.com/victoria-riley-barnett/koreader-tailscale).
+
+**Status:** tested on one real device, a jailbroken Kindle (32-bit ARM, Linux 5.15, TUN
+mode), reaching a domain resource behind a reverse proxy through NetBird Cloud. Kobo,
+PocketBook and userspace mode have only been tested in simulation, if at all. Reports are
+welcome, especially from other devices.
+
+## Install
+
+Needs a 32-bit or 64-bit ARM device, and about 60 MB of free space while installing
+(40 MB after).
+
+1. Download `netbird.koplugin-<version>.zip` from
+   [Releases](https://github.com/denMaier/netbird-koreader-plugin/releases) and unzip it
+   into KOReader's plugins directory, so that you get a `netbird.koplugin` folder there:
+   - Kindle: `/mnt/us/koreader/plugins/`
+   - Kobo: `/mnt/onboard/.adds/koreader/plugins/`
+   - PocketBook: `/mnt/ext1/applications/koreader/plugins/`
+2. Restart KOReader.
+3. Open Network → NetBird VPN → **Set up NetBird**. In reader mode, that's the gear icon
+   → Network → NetBird VPN.
+
+Setup installs NetBird if you agree, tells you which mode your device runs in, and walks
+you through signing in.
+
+## What you set up in NetBird
+
+This depends on your device's mode, which setup tells you.
+
+### TUN mode: reach your server by name
+
+1. In your NetBird dashboard, create a network with a **domain resource** for your server,
+   such as `opds.example.com`.
+2. Add a routing peer to that network: a NetBird peer that can reach the server.
+3. Add a policy that lets this device reach the resource.
+4. Enter the resource's name during setup.
+5. In KOReader, use the server's usual address, such as `https://opds.example.com/opds`.
+
+KOReader then asks NetBird's DNS for those names only, and keeps the real name for your
+reverse proxy and its certificate. Every other name uses the device's normal DNS. If
+NetBird can't resolve a listed name while connected, the connection fails rather than
+going out over the regular network. A redirect to another name needs that name listed
+too.
+
+If your server is a NetBird peer itself, you can use its NetBird IP instead, as below.
+
+Other kinds of NetBird setup, such as IP resources, peer names or your own DNS zones,
+may also work in TUN mode, but they haven't been tested.
+
+### Userspace mode: reach your server by IP
+
+Domain names and domain resources don't work in this mode.
+
+1. Install NetBird on your OPDS server, so that it is a peer itself.
+2. Add a policy that lets this device reach it.
+3. In KOReader, use the server's NetBird IP, such as `http://100.92.1.5:8080/opds`.
+
+A server behind a reverse proxy that needs its real name won't work this way.
+
+### Signing in
+
+- **Scan QR code:** scan it with your phone, check that your phone shows the same
+  code as the e-reader, and approve. This needs an identity provider on the server,
+  which NetBird Cloud has.
+- **Use a setup key:** type a key from your dashboard's Setup Keys page. You can also put
+  it in `<KOReader data dir>/netbird/setup.key` and tap the top row. The key is deleted
+  from the device once connected, because it is only needed to register.
+
+If you host NetBird yourself, set the server during setup. Changing it later signs the
+device out, because a different server means a new peer.
+
+## Using it
+
+The top row of the menu shows the connection, and tapping it does what it says: connect,
+disconnect or sign in. You can also assign it to a gesture ("Toggle NetBird VPN").
+KOReader remembers your choice: connected stays connected across restarts, off stays off
+with no daemon running.
+
+Check the Status screen if something doesn't work. Every setup step is also available
+on its own under Advanced, along with updating and uninstalling.
+
+DNS stays off until you list a name. With it on, NetBird tries to rewrite
+`/etc/resolv.conf`. On a Kindle the rootfs is read-only, so that fails harmlessly. Where
+it is writable, such as a Kobo, NetBird rewrites the file while connected and restores it
+when it stops, or at the next start after a crash.
+
+## TUN and userspace mode
+
+The plugin picks one when NetBird starts.
+
+|                          | TUN                           | Userspace                      |
+| ------------------------ | ----------------------------- | ------------------------------ |
+| When                     | `/dev/net/tun` is usable      | Otherwise, or if forced        |
+| KOReader to peers        | Yes                           | Yes, through a SOCKS5 proxy    |
+| Other programs to peers  | Yes                           | Only if they speak SOCKS5      |
+| Peers to the device      | Yes, if your policies allow   | No                             |
+
+Many jailbroken Kindles have no TUN device. If TUN is unstable on yours, turn on
+Advanced → Force userspace mode.
+
+In userspace mode NetBird only offers a SOCKS5 proxy on `127.0.0.1:1080`, and
+KOReader can't use SOCKS5. So `netbird_connect.lua` patches LuaSocket's `connect()` to
+send connections to `100.64.0.0/10` through that proxy. Everything else, including
+regular internet traffic, goes the normal way. If NetBird is down, those connections
+fail. They never fall back to the regular network.
+
+## What it doesn't do
+
+- Domain names in userspace mode, or for programs other than KOReader.
+- Exit nodes and picking routes. Manage those on your NetBird dashboard.
+- HTTP proxying for other programs.
+- Inbound connections in userspace mode, such as SSH or Syncthing to the device.
+- Android, or anything that isn't ARM.
+
+## Good to know
+
+- **Memory:** the daemon is a large Go program. It used about 70 MB of RAM when
+  idle on 32-bit ARM, which can matter on a device with 256 MB. Turning NetBird off
+  frees it all.
+- **Updates:** the NetBird version is pinned in `netbird.sh` with its SHA-256 hash,
+  and a mismatch refuses to install. A new NetBird version arrives with a new plugin
+  version. After updating the plugin, tap Install/Update NetBird. Your device
+  identity is kept.
+- **Credentials:** the device's WireGuard private key is in
+  `<KOReader data dir>/netbird/state/`. That is usually a FAT partition with no file
+  permissions, readable by anyone who can mount the e-reader over USB. If you lose the
+  device, delete the peer from your dashboard.
+- **USB storage mode** stops NetBird first and brings it back afterwards.
+- **Uninstalling** from Advanced removes the binary and the identity, not the
+  peer on your dashboard.
+
+## Files
+
+```
+netbird.koplugin/
+  main.lua           menu, state and decisions
+  netbird.sh         install, start, stop; no decisions of its own
+  netbird_connect.lua  gets KOReader to peers: SOCKS5 in userspace mode, listed hostnames
+  netbird_qr.lua     sign-in screen with the QR code and the code to compare
+```
+
+On the device, `<KOReader data dir>/netbird/` holds the binary, state and
+`netbird.log`, and `/tmp/netbird-koreader/` holds the socket and sign-in output.
+
+## Test
+
+```sh
+test/run.sh
+```
+
+Needs Docker on an arm64 machine. It starts a real NetBird server and a real peer,
+then runs the real plugin and binary with stubbed KOReader widgets on two simulated
+e-readers: arm64 with TUN on a FAT data dir, and 32-bit ARM without TUN. Each runs
+through installing, tampered downloads, bad keys, connecting, HTTP and HTTPS to the
+peer, reboots, USB storage mode, sign-in and uninstalling.
+
+It doesn't cover real e-reader kernels or KOReader's actual UI.
+
+## License
+
+MIT, like the plugin it is based on. See [LICENSE](LICENSE).

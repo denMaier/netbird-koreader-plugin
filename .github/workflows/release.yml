@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify version matches tag
+        run: |
+          META_VER=$(sed -n 's/.*version = "\(.*\)".*/\1/p' netbird.koplugin/_meta.lua)
+          if [ "v${META_VER}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match _meta.lua version ${META_VER}"
+            exit 1
+          fi
+
+      - name: Build zip
+        run: |
+          cp LICENSE netbird.koplugin/
+          zip -r "netbird.koplugin-${GITHUB_REF_NAME}.zip" netbird.koplugin
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "netbird.koplugin-${GITHUB_REF_NAME}.zip" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
