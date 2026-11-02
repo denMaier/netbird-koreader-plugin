@@ -54,6 +54,16 @@ Needs a 32-bit or 64-bit ARM device, and about 60 MB of free space while install
 3. Open Network → NetBird VPN → **Set up NetBird**. In reader mode, that's the gear icon
    → Network → NetBird VPN.
 
+**With [ZenPM](https://github.com/xZenLabs/zen-pm):** this plugin is its own ZenPM repository. Add
+this as a source, then install NetBird VPN from it:
+
+```
+https://raw.githubusercontent.com/denMaier/netbird.koplugin/main
+```
+
+ZenPM labels it unsigned, because it is. ZenPM's uninstall only removes the plugin, so use
+Advanced → Uninstall NetBird first: that stops NetBird and removes its files and identity.
+
 Setup installs NetBird if you agree, tells you which mode your device runs in, and walks
 you through signing in.
 

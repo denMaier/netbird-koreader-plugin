@@ -5,3 +5,5 @@
 .gitignore export-ignore
 assets export-ignore
 test export-ignore
+manifest.json export-ignore
+versions.json export-ignore

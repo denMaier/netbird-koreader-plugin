@@ -21,6 +21,11 @@ jobs:
             echo "Tag ${GITHUB_REF_NAME} does not match _meta.lua version ${META_VER}"
             exit 1
           fi
+          # ZenPM installs what these name, so a release has to update them first.
+          if ! grep -q "\"version\": \"${META_VER}\"" manifest.json || ! grep -q "\"tag_name\": \"${GITHUB_REF_NAME}\"" versions.json; then
+            echo "manifest.json and versions.json do not list ${GITHUB_REF_NAME}"
+            exit 1
+          fi
 
       - name: Build zip
         run: git archive --prefix=netbird.koplugin/ -o "netbird.koplugin-${GITHUB_REF_NAME}.zip" HEAD
