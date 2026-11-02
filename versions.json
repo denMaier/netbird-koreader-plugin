@@ -1,0 +1,16 @@
+{
+  "releases": [
+    {
+      "tag_name": "v0.1.1",
+      "name": "v0.1.1",
+      "assets": [
+        {
+          "name": "netbird.koplugin-v0.1.1.zip",
+          "url": "https://github.com/denMaier/netbird.koplugin/releases/download/v0.1.1/netbird.koplugin-v0.1.1.zip",
+          "size": 21253,
+          "digest": "sha256:1e37d48a0833e40ff9cab7155b9dcef3082b840823e690124f4f7b9fea4ebef2"
+        }
+      ]
+    }
+  ]
+}
