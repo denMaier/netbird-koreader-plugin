@@ -1,0 +1,76 @@
+# Real NetBird server, a real peer, and the plugin on a simulated e-reader.
+# Run with test/run.sh.
+services:
+  server:
+    image: netbirdio/netbird-server:0.82.0
+    volumes:
+      - ./server-config.yaml:/etc/netbird/config.yaml:ro
+      - server-data:/var/lib/netbird
+    command: ["--config", "/etc/netbird/config.yaml"]
+    hostname: netbird-server
+    networks: { default: { aliases: [netbird-server] } }
+
+  # A NetBird peer serving a file: what an OPDS or sync server is to the e-reader.
+  # Gets a setup key from setup.sh over the shared volume.
+  peer:
+    image: alpine:3.20
+    platform: linux/arm64
+    depends_on: [setup]
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun"]
+    volumes: ["shared:/shared"]
+    command: ["sh", "/test/peer.sh"]
+    configs: [{ source: peer_sh, target: /test/peer.sh }, { source: resource_sh, target: /test/resource.sh }]
+    networks: [default, backend]
+
+  # A site behind a reverse proxy that only answers to its real name, like an OPDS
+  # server. Only the routing peer can reach it, so getting a reply proves the route.
+  opds:
+    image: alpine:3.20
+    platform: linux/arm64
+    command: ["sh", "/test/opds.sh"]
+    configs: [{ source: opds_sh, target: /test/opds.sh }]
+    # default is only for installing nginx. The name exists on backend alone.
+    networks: { default: {}, backend: { aliases: [opds.internal] } }
+
+  setup:
+    image: alpine:3.20
+    platform: linux/arm64
+    depends_on: [server]
+    volumes: ["shared:/shared"]
+    command: ["sh", "/test/setup.sh"]
+    configs: [{ source: setup_sh, target: /test/setup.sh }]
+
+  # Kernel TUN available, data dir on FAT like a real Kobo or Kindle.
+  reader-tun:
+    image: alpine:3.20
+    platform: linux/arm64
+    profiles: [test]
+    init: true # reaps the daemon we kill, as a device's init does
+    privileged: true
+    volumes: ["shared:/shared", "../netbird.koplugin:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
+    command: ["sh", "/test/reader.sh", "tun"]
+
+  # 32-bit, no /dev/net/tun and no NET_ADMIN, like a stock jailbroken Kindle.
+  reader-netstack:
+    image: alpine:3.20
+    platform: linux/arm/v7
+    profiles: [test]
+    init: true # reaps the daemon we kill, as a device's init does
+    volumes: ["shared:/shared", "../netbird.koplugin:/plugin:ro", "./harness.lua:/test/harness.lua:ro", "./reader.sh:/test/reader.sh:ro", "./approve.sh:/test/approve.sh:ro"]
+    command: ["sh", "/test/reader.sh", "netstack"]
+
+networks:
+  default:
+  backend:
+    internal: true
+
+volumes:
+  shared:
+  server-data:
+
+configs:
+  peer_sh: { file: ./peer.sh }
+  setup_sh: { file: ./setup.sh }
+  resource_sh: { file: ./resource.sh }
+  opds_sh: { file: ./opds.sh }
