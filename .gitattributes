@@ -1,0 +1,7 @@
+# Keep downloads to just the plugin. This applies to the release zip and to the
+# archives that plugin stores install from.
+.github export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+assets export-ignore
+test export-ignore

@@ -7,13 +7,37 @@ KOReader, so OPDS, progress sync and other KOReader features can reach your
 self-hosted services from anywhere. It works with NetBird Cloud and self-hosted
 servers. That's all it does.
 
-It is an adaptation of
-[koreader-tailscale](https://github.com/victoria-riley-barnett/koreader-tailscale).
+## Credit
 
-**Status:** tested on one real device, a jailbroken Kindle (32-bit ARM, Linux 5.15, TUN
-mode), reaching a domain resource behind a reverse proxy through NetBird Cloud. Kobo,
-PocketBook and userspace mode have only been tested in simulation, if at all. Reports are
-welcome, especially from other devices.
+This plugin is adapted from
+[koreader-tailscale](https://github.com/victoria-riley-barnett/koreader-tailscale) by
+Victoria B., which does the same job for Tailscale. Its structure and menu come from there,
+and it is MIT licensed like this one.
+
+## Tested on one device: testers very welcome
+
+So far this has only been tested on one real device: **Kindle Paperwhite 12th gen**, jailbroken, in TUN mode,
+reaching a domain resource behind a reverse proxy through NetBird Cloud.
+
+Kobo, PocketBook, other Kindles and userspace mode have not been tried on real hardware. The
+automated tests simulate 32-bit ARM without TUN, but a simulation isn't a device.
+
+If you try it on anything else, please
+[open an issue](https://github.com/denMaier/netbird.koplugin/issues) with your device, whether
+Status says TUN or userspace, and what worked or didn't. Reports that it simply works are
+useful too.
+
+## What it downloads
+
+The plugin doesn't include NetBird. When you agree during setup, your device downloads the
+official NetBird client from
+[NetBird's GitHub releases](https://github.com/netbirdio/netbird/releases): about 15 MB, 40 MB
+once unpacked. The version and its SHA-256 hash are pinned in `netbird.sh`, and a mismatch
+refuses to install.
+
+The NetBird client has its own license, BSD-3-Clause, and its own copyright, NetBird GmbH &
+Authors. This plugin is an independent project, not made or endorsed by NetBird. Likewise, it
+isn't made or endorsed by Tailscale.
 
 ## Install
 
@@ -21,7 +45,7 @@ Needs a 32-bit or 64-bit ARM device, and about 60 MB of free space while install
 (40 MB after).
 
 1. Download `netbird.koplugin-<version>.zip` from
-   [Releases](https://github.com/denMaier/netbird-koreader-plugin/releases) and unzip it
+   [Releases](https://github.com/denMaier/netbird.koplugin/releases) and unzip it
    into KOReader's plugins directory, so that you get a `netbird.koplugin` folder there:
    - Kindle: `/mnt/us/koreader/plugins/`
    - Kobo: `/mnt/onboard/.adds/koreader/plugins/`
@@ -142,11 +166,10 @@ fail. They never fall back to the regular network.
 ## Files
 
 ```
-netbird.koplugin/
-  main.lua           menu, state and decisions
-  netbird.sh         install, start, stop; no decisions of its own
-  netbird_connect.lua  gets KOReader to peers: SOCKS5 in userspace mode, listed hostnames
-  netbird_qr.lua     sign-in screen with the QR code and the code to compare
+main.lua             menu, state and decisions
+netbird.sh           install, start, stop; no decisions of its own
+netbird_connect.lua  gets KOReader to peers: SOCKS5 in userspace mode, listed hostnames
+netbird_qr.lua       sign-in screen with the QR code and the code to compare
 ```
 
 On the device, `<KOReader data dir>/netbird/` holds the binary, state and
@@ -168,4 +191,6 @@ It doesn't cover real e-reader kernels or KOReader's actual UI.
 
 ## License
 
-MIT, like the plugin it is based on. See [LICENSE](LICENSE).
+The plugin is MIT licensed, like the plugin it is based on. See [LICENSE](LICENSE). The
+NetBird client it downloads is licensed separately, as described under
+[What it downloads](#what-it-downloads).
